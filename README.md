@@ -58,9 +58,22 @@ pip install pyperclip pynput pystray Pillow
 
 ### 第二步：运行程序
 
+**方式一：启动脚本（推荐，无终端窗口）**
+
+| 平台 | 操作 |
+|------|------|
+| Windows | 双击 `start.vbs` |
+| macOS | 终端执行 `bash start.sh`，或赋予执行权限后双击 `start.sh` |
+
+启动后程序在后台运行，无需保持终端窗口，关闭终端不影响程序。
+
+**方式二：命令行启动（调试用）**
+
 ```bash
 python main.py
 ```
+
+> 此方式会显示终端窗口，关闭终端程序将退出，适合调试时使用。
 
 ## 使用说明
 
