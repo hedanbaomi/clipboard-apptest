@@ -1,6 +1,6 @@
 # 剪切板管理器
 
-一款跨平台剪切板管理工具，支持 Windows 和 macOS（M系列芯片），提供历史记录、分类管理、快捷键操作和开机自启动。
+一款跨平台剪切板管理工具，支持 Windows 和 macOS（M系列芯片），提供历史记录、分类管理、快捷键操作和开机自启动。注：瞎写的纯练手，就当给github中在添加依托就好
 
 ## 功能特性
 
@@ -40,11 +40,11 @@ python main.py
 
 ### 快捷键
 
-| 平台 | 快捷键 | 功能 |
-|------|--------|------|
+| 平台      | 快捷键            | 功能       |
+| ------- | -------------- | -------- |
 | Windows | `Ctrl+Shift+V` | 显示/隐藏主窗口 |
-| macOS | `Cmd+Shift+V` | 显示/隐藏主窗口 |
-| 通用 | `Escape` | 隐藏窗口 |
+| macOS   | `Cmd+Shift+V`  | 显示/隐藏主窗口 |
+| 通用      | `Escape`       | 隐藏窗口     |
 
 ### 操作说明
 
@@ -76,16 +76,16 @@ python main.py
 }
 ```
 
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| max_history | 最大历史记录数 | 100 |
-| theme | 主题 (light/dark) | light |
-| hotkey | 全局快捷键 | ctrl+shift+v (Win) / cmd+shift+v (Mac) |
-| autostart | 开机自启动 | true |
-| window_width | 窗口宽度 | 500 |
-| window_height | 窗口高度 | 600 |
-| check_interval | 剪切板检测间隔(ms) | 500 |
-| font_scale | 字体缩放比例 | 1.0 |
+| 配置项             | 说明              | 默认值                                    |
+| --------------- | --------------- | -------------------------------------- |
+| max\_history    | 最大历史记录数         | 100                                    |
+| theme           | 主题 (light/dark) | light                                  |
+| hotkey          | 全局快捷键           | ctrl+shift+v (Win) / cmd+shift+v (Mac) |
+| autostart       | 开机自启动           | true                                   |
+| window\_width   | 窗口宽度            | 500                                    |
+| window\_height  | 窗口高度            | 600                                    |
+| check\_interval | 剪切板检测间隔(ms)     | 500                                    |
+| font\_scale     | 字体缩放比例          | 1.0                                    |
 
 ## 项目结构
 
@@ -116,23 +116,23 @@ clipboard-app/
 
 ## 跨平台架构
 
-| 模块 | Windows | macOS / Linux |
-|------|---------|---------------|
-| 剪切板读写 | Win32 API (ctypes) | osascript / pyperclip |
-| 全局快捷键 | keyboard 库 | pynput 库 |
-| 开机自启 | 注册表 (winreg) | LaunchAgent (plist) |
-| 数据目录 | 程序目录/data | ~/Library/Application Support/ |
-| 系统字体 | SegoeUI | Helvetica Neue |
+| 模块    | Windows            | macOS / Linux                   |
+| ----- | ------------------ | ------------------------------- |
+| 剪切板读写 | Win32 API (ctypes) | osascript / pyperclip           |
+| 全局快捷键 | keyboard 库         | pynput 库                        |
+| 开机自启  | 注册表 (winreg)       | LaunchAgent (plist)             |
+| 数据目录  | 程序目录/data          | \~/Library/Application Support/ |
+| 系统字体  | SegoeUI            | Helvetica Neue                  |
 
 ## 依赖库
 
-| 库 | 平台 | 用途 |
-|----|------|------|
-| pyperclip | 全平台 | 剪切板文本操作 |
-| keyboard | Windows | 全局快捷键 |
-| pynput | macOS/Linux | 全局快捷键 |
-| pystray | 全平台 | 系统托盘 |
-| Pillow | 全平台 | 图标生成、图片处理 |
+| 库         | 平台          | 用途        |
+| --------- | ----------- | --------- |
+| pyperclip | 全平台         | 剪切板文本操作   |
+| keyboard  | Windows     | 全局快捷键     |
+| pynput    | macOS/Linux | 全局快捷键     |
+| pystray   | 全平台         | 系统托盘      |
+| Pillow    | 全平台         | 图标生成、图片处理 |
 
 ## 许可证
 
