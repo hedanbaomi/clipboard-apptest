@@ -98,6 +98,10 @@ python main.py
 9. **切换主题** - 点击右上角月亮/太阳图标
 10. **设置** - 点击"设置"配置开机自启、字体大小等选项
 
+### 日志文件
+
+程序运行日志保存在 `logs/` 目录下，文件名格式为 `YYYYMMDD.log`（如 `20260421.log`）。遇到问题时可查看日志定位原因。
+
 ## 配置文件
 
 配置文件位于 `config.json`：
@@ -131,6 +135,8 @@ python main.py
 ```
 clipboard-app/
 ├── main.py                     # 主程序入口
+├── start.vbs                   # Windows 启动脚本（无终端）
+├── start.sh                    # macOS/Linux 启动脚本（后台运行）
 ├── requirements.txt            # 依赖文件
 ├── config.json                 # 配置文件
 ├── core/

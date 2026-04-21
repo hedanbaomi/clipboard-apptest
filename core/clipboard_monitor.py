@@ -11,6 +11,9 @@ from abc import ABC, abstractmethod
 import pyperclip
 
 from utils.platform_utils import is_windows, is_macos
+from utils.logger import setup_logger
+
+logger = setup_logger("clipboard_monitor")
 
 
 class ClipboardData:
@@ -60,6 +63,9 @@ class ClipboardBackend(ABC):
 
 
 class WindowsClipboardBackend(ClipboardBackend):
+    CLIPBOARD_OPEN_RETRIES = 5
+    CLIPBOARD_OPEN_RETRY_DELAY = 0.05
+
     def __init__(self):
         import ctypes
         from ctypes import wintypes
@@ -114,6 +120,15 @@ class WindowsClipboardBackend(ClipboardBackend):
         k.GlobalSize.argtypes = [wt.HGLOBAL]
         k.GlobalSize.restype = ct.c_size_t
 
+    def _open_clipboard_with_retry(self) -> bool:
+        for attempt in range(self.CLIPBOARD_OPEN_RETRIES):
+            if self.user32.OpenClipboard(None):
+                return True
+            if attempt < self.CLIPBOARD_OPEN_RETRIES - 1:
+                time.sleep(self.CLIPBOARD_OPEN_RETRY_DELAY)
+        logger.warning(f"OpenClipboard failed after {self.CLIPBOARD_OPEN_RETRIES} retries")
+        return False
+
     def get_content(self) -> Optional[ClipboardData]:
         try:
             has_files = self.user32.IsClipboardFormatAvailable(self.CF_HDROP)
@@ -121,42 +136,49 @@ class WindowsClipboardBackend(ClipboardBackend):
                          self.user32.IsClipboardFormatAvailable(self.CF_DIBV5))
             has_text = self.user32.IsClipboardFormatAvailable(self.CF_UNICODETEXT)
 
+            logger.debug(f"Clipboard formats - files:{has_files} image:{has_image} text:{has_text}")
+
             if has_files:
                 files = self._get_files()
                 if files:
+                    logger.info(f"Got files: {files}")
                     return ClipboardData(content_type="file", files=files,
                                          text="\n".join(files))
 
             if has_image and not has_text:
                 image_data = self._get_image()
                 if image_data:
+                    logger.info(f"Got image: {len(image_data)} bytes")
                     return ClipboardData(content_type="image", image_data=image_data)
 
             if has_text:
                 content = pyperclip.paste()
                 if content:
+                    logger.info(f"Got text: {len(content)} chars")
                     return ClipboardData(content_type="text", text=content)
 
             if has_image:
                 image_data = self._get_image()
                 if image_data:
+                    logger.info(f"Got image (fallback): {len(image_data)} bytes")
                     return ClipboardData(content_type="image", image_data=image_data)
 
             try:
                 content = pyperclip.paste()
                 if content:
+                    logger.info(f"Got text (pyperclip fallback): {len(content)} chars")
                     return ClipboardData(content_type="text", text=content)
             except Exception:
                 pass
 
             return None
         except Exception as e:
-            print(f"Error getting clipboard: {e}")
+            logger.error(f"Error getting clipboard: {e}", exc_info=True)
             return None
 
     def _get_files(self) -> Optional[List[str]]:
         try:
-            if not self.user32.OpenClipboard(None):
+            if not self._open_clipboard_with_retry():
                 return None
             try:
                 h_drop = self.user32.GetClipboardData(self.CF_HDROP)
@@ -174,12 +196,12 @@ class WindowsClipboardBackend(ClipboardBackend):
             finally:
                 self.user32.CloseClipboard()
         except Exception as e:
-            print(f"Error getting files: {e}")
+            logger.error(f"Error getting files: {e}", exc_info=True)
             return None
 
     def _get_image(self) -> Optional[bytes]:
         try:
-            if not self.user32.OpenClipboard(None):
+            if not self._open_clipboard_with_retry():
                 return None
             try:
                 h_data = self.user32.GetClipboardData(self.CF_DIB)
@@ -201,7 +223,7 @@ class WindowsClipboardBackend(ClipboardBackend):
             finally:
                 self.user32.CloseClipboard()
         except Exception as e:
-            print(f"Error getting image: {e}")
+            logger.error(f"Error getting image: {e}", exc_info=True)
             return None
 
     def _dib_to_png(self, dib_data: bytes) -> bytes:
@@ -252,7 +274,7 @@ class WindowsClipboardBackend(ClipboardBackend):
             img.save(output, format='PNG')
             return output.getvalue()
         except Exception as e:
-            print(f"Error converting DIB to PNG: {e}")
+            logger.error(f"Error converting DIB to PNG: {e}", exc_info=True)
             return b""
 
     def set_content(self, data: ClipboardData) -> bool:
@@ -270,7 +292,7 @@ class WindowsClipboardBackend(ClipboardBackend):
                 pyperclip.copy(text)
                 return True
         except Exception as e:
-            print(f"Error setting clipboard: {e}")
+            logger.error(f"Error setting clipboard: {e}", exc_info=True)
             return False
 
     def _is_file_path(self, content: str) -> bool:
@@ -331,7 +353,7 @@ class WindowsClipboardBackend(ClipboardBackend):
             finally:
                 self.kernel32.GlobalUnlock(h_global)
 
-            if not self.user32.OpenClipboard(None):
+            if not self._open_clipboard_with_retry():
                 self.kernel32.GlobalFree(h_global)
                 return False
             try:
@@ -343,7 +365,7 @@ class WindowsClipboardBackend(ClipboardBackend):
                 self.user32.CloseClipboard()
             return True
         except Exception as e:
-            print(f"Error setting files: {e}")
+            logger.error(f"Error setting files: {e}", exc_info=True)
             return False
 
     def _set_image(self, image_data: bytes) -> bool:
@@ -404,7 +426,7 @@ class WindowsClipboardBackend(ClipboardBackend):
             self.ctypes.memmove(p_bits, pixels, len(pixels))
             self.gdi32.DeleteDC(hdc)
 
-            if not self.user32.OpenClipboard(None):
+            if not self._open_clipboard_with_retry():
                 self.gdi32.DeleteObject(h_bitmap)
                 return False
             try:
@@ -417,7 +439,7 @@ class WindowsClipboardBackend(ClipboardBackend):
                 self.user32.CloseClipboard()
             return True
         except Exception as e:
-            print(f"Error setting image: {e}")
+            logger.error(f"Error setting image: {e}", exc_info=True)
             return False
 
 
@@ -426,20 +448,23 @@ class MacOSClipboardBackend(ClipboardBackend):
         try:
             image_data = self._get_image()
             if image_data:
+                logger.info(f"Got macOS image: {len(image_data)} bytes")
                 return ClipboardData(content_type="image", image_data=image_data)
 
             files = self._get_files()
             if files:
+                logger.info(f"Got macOS files: {files}")
                 return ClipboardData(content_type="file", files=files,
                                      text="\n".join(files))
 
             content = pyperclip.paste()
             if content:
+                logger.info(f"Got macOS text: {len(content)} chars")
                 return ClipboardData(content_type="text", text=content)
 
             return None
         except Exception as e:
-            print(f"Error getting clipboard: {e}")
+            logger.error(f"Error getting macOS clipboard: {e}", exc_info=True)
             return None
 
     def _get_image(self) -> Optional[bytes]:
@@ -476,7 +501,7 @@ class MacOSClipboardBackend(ClipboardBackend):
 
             return None
         except Exception as e:
-            print(f"Error getting macOS image: {e}")
+            logger.error(f"Error getting macOS image: {e}", exc_info=True)
             return None
 
     def _get_files(self) -> Optional[List[str]]:
@@ -526,7 +551,7 @@ class MacOSClipboardBackend(ClipboardBackend):
                 pyperclip.copy(data.text)
                 return True
         except Exception as e:
-            print(f"Error setting clipboard: {e}")
+            logger.error(f"Error setting macOS clipboard: {e}", exc_info=True)
             return False
 
     def _set_image(self, image_data: bytes) -> bool:
@@ -549,7 +574,7 @@ class MacOSClipboardBackend(ClipboardBackend):
                 except Exception:
                     pass
         except Exception as e:
-            print(f"Error setting macOS image: {e}")
+            logger.error(f"Error setting macOS image: {e}", exc_info=True)
             return False
 
     def _set_files(self, files: List[str]) -> bool:
@@ -575,11 +600,14 @@ class MacOSClipboardBackend(ClipboardBackend):
                 )
             return True
         except Exception as e:
-            print(f"Error setting macOS files: {e}")
+            logger.error(f"Error setting macOS files: {e}", exc_info=True)
             return False
 
 
 class ClipboardMonitor:
+    DEBOUNCE_SECONDS = 0.3
+    MAX_CONSECUTIVE_FAILURES = 10
+
     def __init__(self, on_change: Callable[[ClipboardData], None], interval: int = 500):
         self.on_change = on_change
         self.interval = interval / 1000.0
@@ -587,6 +615,8 @@ class ClipboardMonitor:
         self._thread: Optional[threading.Thread] = None
         self._last_content: str = ""
         self._last_change_count: int = 0
+        self._consecutive_failures: int = 0
+        self._last_change_time: float = 0
 
         if is_windows():
             self._backend = WindowsClipboardBackend()
@@ -622,19 +652,39 @@ class ClipboardMonitor:
             return content.text
 
     def _monitor_loop(self):
+        logger.info("Clipboard monitor loop started")
         while self._running:
             try:
                 current_count = self._get_change_count()
                 if current_count != self._last_change_count:
-                    self._last_change_count = current_count
+                    now = time.time()
+                    if now - self._last_change_time < self.DEBOUNCE_SECONDS:
+                        logger.debug("Debouncing clipboard change")
+                        time.sleep(self.DEBOUNCE_SECONDS)
+                        current_count = self._get_change_count()
+
                     content = self._backend.get_content()
                     if content:
+                        self._consecutive_failures = 0
+                        self._last_change_count = current_count
+                        self._last_change_time = now
                         content_str = self._content_to_string(content)
                         if content_str != self._last_content:
                             self._last_content = content_str
+                            logger.info(f"Clipboard changed: {content.content_type}")
                             self.on_change(content)
+                    else:
+                        self._consecutive_failures += 1
+                        logger.warning(
+                            f"Clipboard changed (count={current_count}) but get_content returned None "
+                            f"(failures={self._consecutive_failures})"
+                        )
+                        if self._consecutive_failures >= self.MAX_CONSECUTIVE_FAILURES:
+                            self._last_change_count = current_count
+                            self._consecutive_failures = 0
+                            logger.warning("Too many consecutive failures, skipping change")
             except Exception as e:
-                print(f"Monitor error: {e}")
+                logger.error(f"Monitor error: {e}", exc_info=True)
 
             time.sleep(self.interval)
 
@@ -649,12 +699,14 @@ class ClipboardMonitor:
 
         self._thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self._thread.start()
+        logger.info("Clipboard monitor started")
 
     def stop(self):
         self._running = False
         if self._thread:
             self._thread.join(timeout=1.0)
             self._thread = None
+        logger.info("Clipboard monitor stopped")
 
     def set_clipboard(self, content):
         try:
@@ -671,7 +723,7 @@ class ClipboardMonitor:
                 self._backend.set_content(data)
                 self._last_content = text
         except Exception as e:
-            print(f"Error setting clipboard: {e}")
+            logger.error(f"Error setting clipboard: {e}", exc_info=True)
 
     def _is_file_path(self, content: str) -> bool:
         if not content:

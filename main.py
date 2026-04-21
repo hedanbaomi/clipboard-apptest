@@ -10,8 +10,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
 from utils.platform_utils import is_windows, is_macos, get_data_dir
+from utils.logger import setup_logger
 from gui.styles import enable_high_dpi
 enable_high_dpi()
+
+logger = setup_logger("main")
 
 from core.clipboard_monitor import ClipboardMonitor
 from core.storage import Storage
@@ -85,6 +88,7 @@ class ClipboardApp:
         self._running = False
 
     def _on_clipboard_change(self, content):
+        logger.debug(f"Clipboard change received: {content.content_type if hasattr(content, 'content_type') else type(content)}")
         if self.main_window:
             self.main_window.on_clipboard_change(content)
 
@@ -94,6 +98,7 @@ class ClipboardApp:
 
     def _exit_app(self):
         self._running = False
+        logger.info("Exiting application...")
         self.clipboard_monitor.stop()
         self.hotkey_manager.unregister_all()
         self.tray.stop()
@@ -120,6 +125,7 @@ class ClipboardApp:
             pass
 
         hotkey = self.config.get("hotkey", "ctrl+shift+v")
+        logger.info(f"App started - hotkey: {hotkey}")
         print("=" * 50)
         print("  剪切板管理器 已启动")
         print(f"  快捷键: {hotkey.upper()}")
@@ -138,6 +144,7 @@ def main():
     except KeyboardInterrupt:
         print("\n程序已退出")
     except Exception as e:
+        logger.error(f"Application error: {e}", exc_info=True)
         print(f"程序错误: {e}")
         import traceback
         traceback.print_exc()
