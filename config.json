@@ -1,0 +1,10 @@
+{
+    "max_history": 100,
+    "theme": "light",
+    "hotkey": "ctrl+shift+v",
+    "autostart": true,
+    "window_width": 500,
+    "window_height": 600,
+    "check_interval": 500,
+    "font_scale": 0.9
+}

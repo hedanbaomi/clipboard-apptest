@@ -1,0 +1,139 @@
+# 剪切板管理器
+
+一款跨平台剪切板管理工具，支持 Windows 和 macOS（M系列芯片），提供历史记录、分类管理、快捷键操作和开机自启动。
+
+## 功能特性
+
+- **剪切板历史记录** - 自动保存所有复制内容，支持最多100条历史
+- **智能分类** - 自动识别文本、链接、文件路径、图片、代码等类型
+- **图片支持** - 支持截图/图片的复制粘贴，自动预览
+- **文件支持** - 支持文件/文件夹的复制粘贴
+- **实时搜索** - 快速搜索历史记录
+- **快捷键操作** - Windows: `Ctrl+Shift+V` / macOS: `Cmd+Shift+V`
+- **系统托盘** - 最小化到托盘，后台静默运行
+- **开机自启** - Windows 注册表 / macOS LaunchAgent
+- **固定功能** - 重要内容可固定置顶，不会被清空
+- **深色模式** - 支持浅色/深色主题切换
+- **字体缩放** - 设置中可调节字体大小
+- **本地存储** - 数据保存在本地，保护隐私
+
+## 安装
+
+### 环境要求
+
+- Python 3.8+
+- Windows 10/11 或 macOS (Apple Silicon / Intel)
+
+### 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+### 运行程序
+
+```bash
+python main.py
+```
+
+## 使用说明
+
+### 快捷键
+
+| 平台 | 快捷键 | 功能 |
+|------|--------|------|
+| Windows | `Ctrl+Shift+V` | 显示/隐藏主窗口 |
+| macOS | `Cmd+Shift+V` | 显示/隐藏主窗口 |
+| 通用 | `Escape` | 隐藏窗口 |
+
+### 操作说明
+
+1. **复制内容** - 程序会自动监听并保存剪切板内容
+2. **查看历史** - 按快捷键或点击托盘图标
+3. **搜索** - 在搜索框输入关键词实时过滤
+4. **分类筛选** - 点击分类标签查看特定类型内容
+5. **复制** - 点击历史记录卡片中的"复制"按钮
+6. **固定** - 点击"固定"将重要内容置顶
+7. **删除** - 点击"删除"移除单条记录
+8. **清空** - 点击"清空历史"清除所有记录（固定内容保留）
+9. **切换主题** - 点击右上角月亮/太阳图标
+10. **设置** - 点击"设置"配置开机自启、字体大小等选项
+
+## 配置文件
+
+配置文件位于 `config.json`：
+
+```json
+{
+    "max_history": 100,
+    "theme": "light",
+    "hotkey": "ctrl+shift+v",
+    "autostart": true,
+    "window_width": 500,
+    "window_height": 600,
+    "check_interval": 500,
+    "font_scale": 1.0
+}
+```
+
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| max_history | 最大历史记录数 | 100 |
+| theme | 主题 (light/dark) | light |
+| hotkey | 全局快捷键 | ctrl+shift+v (Win) / cmd+shift+v (Mac) |
+| autostart | 开机自启动 | true |
+| window_width | 窗口宽度 | 500 |
+| window_height | 窗口高度 | 600 |
+| check_interval | 剪切板检测间隔(ms) | 500 |
+| font_scale | 字体缩放比例 | 1.0 |
+
+## 项目结构
+
+```
+clipboard-app/
+├── main.py                     # 主程序入口
+├── requirements.txt            # 依赖文件
+├── config.json                 # 配置文件
+├── core/
+│   ├── clipboard_monitor.py    # 剪切板监听（跨平台后端）
+│   ├── storage.py              # 数据存储
+│   ├── hotkey.py               # 快捷键管理（跨平台后端）
+│   └── autostart.py            # 开机自启（跨平台后端）
+├── gui/
+│   ├── styles.py               # 样式与主题
+│   ├── main_window.py          # 主窗口
+│   ├── tray.py                 # 系统托盘
+│   └── components/
+│       ├── search_bar.py       # 搜索栏
+│       ├── category_tabs.py    # 分类标签
+│       ├── history_card.py     # 历史卡片
+│       └── action_bar.py       # 操作栏
+└── utils/
+    ├── platform_utils.py       # 平台检测工具
+    ├── content_type.py         # 内容类型识别
+    └── helpers.py              # 工具函数
+```
+
+## 跨平台架构
+
+| 模块 | Windows | macOS / Linux |
+|------|---------|---------------|
+| 剪切板读写 | Win32 API (ctypes) | osascript / pyperclip |
+| 全局快捷键 | keyboard 库 | pynput 库 |
+| 开机自启 | 注册表 (winreg) | LaunchAgent (plist) |
+| 数据目录 | 程序目录/data | ~/Library/Application Support/ |
+| 系统字体 | SegoeUI | Helvetica Neue |
+
+## 依赖库
+
+| 库 | 平台 | 用途 |
+|----|------|------|
+| pyperclip | 全平台 | 剪切板文本操作 |
+| keyboard | Windows | 全局快捷键 |
+| pynput | macOS/Linux | 全局快捷键 |
+| pystray | 全平台 | 系统托盘 |
+| Pillow | 全平台 | 图标生成、图片处理 |
+
+## 许可证
+
+MIT License
