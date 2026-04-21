@@ -24,13 +24,39 @@
 - Python 3.8+
 - Windows 10/11 或 macOS (Apple Silicon / Intel)
 
-### 安装依赖
+### 第一步：安装依赖库
+
+本项目依赖以下第三方库，需要额外安装（Python 自带的标准库无需安装）：
+
+| 库 | 平台 | 用途 |
+|----|------|------|
+| pyperclip | 全平台 | 剪切板文本操作 |
+| keyboard | Windows | 全局快捷键 |
+| pynput | macOS/Linux | 全局快捷键 |
+| pystray | 全平台 | 系统托盘 |
+| Pillow | 全平台 | 图标生成、图片处理 |
+
+**一键安装全部依赖：**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 运行程序
+> `requirements.txt` 已按平台条件配置，Windows 只会安装 `keyboard`，macOS/Linux 只会安装 `pynput`，无需手动筛选。
+
+**如果需要逐个安装，执行以下命令：**
+
+Windows：
+```bash
+pip install pyperclip keyboard pystray Pillow
+```
+
+macOS / Linux：
+```bash
+pip install pyperclip pynput pystray Pillow
+```
+
+### 第二步：运行程序
 
 ```bash
 python main.py
@@ -123,16 +149,6 @@ clipboard-app/
 | 开机自启  | 注册表 (winreg)       | LaunchAgent (plist)             |
 | 数据目录  | 程序目录/data          | \~/Library/Application Support/ |
 | 系统字体  | SegoeUI            | Helvetica Neue                  |
-
-## 依赖库
-
-| 库         | 平台          | 用途        |
-| --------- | ----------- | --------- |
-| pyperclip | 全平台         | 剪切板文本操作   |
-| keyboard  | Windows     | 全局快捷键     |
-| pynput    | macOS/Linux | 全局快捷键     |
-| pystray   | 全平台         | 系统托盘      |
-| Pillow    | 全平台         | 图标生成、图片处理 |
 
 ## 许可证
 
