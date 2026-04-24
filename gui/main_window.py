@@ -381,11 +381,29 @@ class MainWindow:
     
     def _toggle_autostart(self, enabled: bool):
         if enabled:
-            self.autostart.enable()
-            self._show_toast("已开启开机自启")
+            if self.autostart.enable():
+                self.config["autostart"] = True
+                self._save_config()
+                self._show_toast("已开启开机自启")
+            else:
+                self._show_toast("开机自启开启失败")
         else:
-            self.autostart.disable()
-            self._show_toast("已关闭开机自启")
+            if self.autostart.disable():
+                self.config["autostart"] = False
+                self._save_config()
+                self._show_toast("已关闭开机自启")
+            else:
+                self._show_toast("开机自启关闭失败")
+
+    def _save_config(self):
+        try:
+            import json
+            config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config.json")
+            config_path = os.path.normpath(config_path)
+            with open(config_path, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=4, ensure_ascii=False)
+        except Exception:
+            pass
     
     def _show_toast(self, message: str):
         toast = tk.Toplevel(self._root)

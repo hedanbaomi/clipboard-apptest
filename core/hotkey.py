@@ -57,7 +57,7 @@ class _KeyboardHotkeyImpl:
 
     def register(self, hotkey: str, callback: Callable[[], None]):
         import keyboard
-        keyboard.add_hotkey(hotkey, callback, suppress=True)
+        keyboard.add_hotkey(hotkey, callback, suppress=False)
 
     def unregister(self, hotkey: str):
         import keyboard
